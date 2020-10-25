@@ -3,7 +3,6 @@
 import ctypes
 import importlib.util
 import argparse
-from tempfile import NamedTemporaryFile
 
 
 def main(header: str, outfile: str):
