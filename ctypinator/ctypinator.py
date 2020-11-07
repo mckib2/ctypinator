@@ -6,7 +6,7 @@ import argparse
 
 
 def main(header: str, outfile: str):
-    libpath = importlib.util.find_spec('libctypinator').origin
+    libpath = importlib.util.find_spec('transpiler').origin
     _lib = ctypes.cdll.LoadLibrary(libpath)
     _lib.transpile.restype = None
     _lib.transpile.argtypes = [ctypes.c_char_p, ctypes.c_char_p]

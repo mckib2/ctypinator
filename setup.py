@@ -4,34 +4,12 @@ from setuptools import find_packages
 from distutils.core import Extension, setup
 
 from clangTooling import (
-    include_dir as clang_include_dir,
-    library_dir as clang_library_dir,
+    clang_includes,
+    llvm_includes,
+    library_dir,
+    llvm_library_list,
 )
-
-libs = [
-    'LLVMTableGenGlobalISel',
-    'LLVMTableGen',
-    'LLVMFrontendOpenMP',
-    'LLVMOption',
-    'LLVMTransformUtils',
-    'LLVMAnalysis',
-    'LLVMProfileData',
-    'LLVMObject',
-    'LLVMTextAPI',
-    'LLVMBitReader',
-    'LLVMCore',
-    'LLVMRemarks',
-    'LLVMBitstreamReader',
-    'LLVMMCParser',
-    'LLVMMC',
-    'LLVMDebugInfoCodeView',
-    'LLVMDebugInfoMSF',
-    'LLVMBinaryFormat',
-    'LLVMSupport',
-    'LLVMDemangle',
-]
-
-clang_hdrs = clang_include_dir()
+from clangTooling.lib import clang_library_list
 
 setup(
     name='ctypinator',
@@ -47,19 +25,26 @@ setup(
     install_requires=open('requirements.txt', encoding='utf-8').read().split(),
     python_requires='>=3.5',
 
+    # TODO: not portable to windows yet, but clangTooling currently not
+    #       working on windows either...
     ext_modules=[
         Extension(
-            'ctypinator',
+            'transpiler',
             sources=['src/transpiler.cpp'],
-            include_dirs=[
-                clang_hdrs / 'clang/include',
-                clang_hdrs / 'build/tools/clang/include',
-                clang_hdrs / 'llvm/include',
-                clang_hdrs / 'build/include',
-            ],
-            library_dirs=[clang_library_dir()],
-            libraries=libs,
+            include_dirs=clang_includes() + llvm_includes(),
+            library_dirs=[str(library_dir())],
+            libraries=clang_library_list() + llvm_library_list() + ['z', 'curses'],
+            runtime_library_dirs=[str(library_dir())],
             language='c++',
+            extra_compile_args=['-fno-exceptions', '-fno-rtti'],
+            extra_link_args=[],
+            define_macros=[
+                ('_GNU_SOURCE', None),
+                ('__STDC_CONSTANT_MACROS', None),
+                ('__STDC_FORMAT_MACROS', None),
+                ('__STDC_LIMIT_MACROS', None),
+                ('_GLIBCXX_USE_CXX11_ABI', '0')
+            ],
         )
     ],
 )
