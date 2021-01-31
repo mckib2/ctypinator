@@ -11,6 +11,32 @@ from clangTooling import (
 )
 from clangTooling.lib import clang_library_list
 
+# create generated functions:
+with open('src/no_python_keywords.hpp', 'w') as fp:
+    import keyword
+    keywords = set(f'"{name}"' for name in dir(__builtins__))
+    keywords |= set(f'"{kw}"' for kw in keyword.kwlist)
+    keywords = ', '.join(keywords)
+
+    fp.write('\n'.join([
+        '#ifndef NO_PYTHON_KEYWORDS_HPP',
+        '#define NO_PYTHON_KEYWORDS_HPP',
+        '',
+        '#include <string>',
+        '#include <set>',
+        '',
+        'std::string cleanPythonKeywords(const std::string& word) {',
+        f'    static std::set<std::string> keywords = {{{keywords}}};',
+        '    if (keywords.find(word) != keywords.end()) {',
+        '        return word + "_";',
+        '    }',
+        '    return word;',
+        '}',
+        '',
+        '#endif // NO_PYTHON_KEYWORDS_HPP',
+    ]))
+
+
 setup(
     name='ctypinator',
     version='0.0.1',
@@ -34,7 +60,7 @@ setup(
             include_dirs=clang_includes() + llvm_includes(),
             library_dirs=[str(library_dir())],
             libraries=clang_library_list() + llvm_library_list() + ['z', 'curses'],
-            runtime_library_dirs=[str(library_dir())],
+            # runtime_library_dirs=[str(library_dir())],
             language='c++',
             extra_compile_args=['-fno-exceptions', '-fno-rtti'],
             extra_link_args=[],
@@ -43,8 +69,9 @@ setup(
                 ('__STDC_CONSTANT_MACROS', None),
                 ('__STDC_FORMAT_MACROS', None),
                 ('__STDC_LIMIT_MACROS', None),
-                ('_GLIBCXX_USE_CXX11_ABI', '0')
+                ('_GLIBCXX_USE_CXX11_ABI', '0'),
             ],
+            depends=['src/no_python_keywords.hpp'],
         )
     ],
 )
